@@ -1,6 +1,6 @@
 %define name	sympa
 %define version 5.3
-%define release %mkrel 0.beta4.1
+%define release %mkrel 0.beta4.2
 
 # ugly...
 %define exceptions perl(\\(Net::LDAP\\|Archive\\|Commands\\|Conf\\|Language\\|Ldap\\|List\\|Log\\|Marc.*\\|Message\\|SympaTransport\\|Version\\|X509\\|cookielib\\|mail\\|smtp\\|wwslib\\|.*\.pl\\))
@@ -14,6 +14,7 @@ Summary:	SYMPA is an electronic mailing list manager
 License:	GPL
 Group:		System/Servers
 Source0:	%{name}-%{version}b.4.tar.gz
+Source1:	%{name}.init
 Patch0:     %{name}-5.3b.1-install.patch
 URL:		http://www.sympa.org/
 Requires:	openssl >= 0.9.5a
@@ -107,6 +108,9 @@ cat > %{buildroot}%{_sysconfdir}/logrotate.d/sympa <<EOF
 	copytruncate
 }
 EOF
+
+# init script
+install -m 755 %{SOURCE1} %{buildroot}%{_initrddir}/%{name}
 
 # sympa configuration
 cat >> %{buildroot}%{_sysconfdir}/sympa/sympa.conf <<EOF
