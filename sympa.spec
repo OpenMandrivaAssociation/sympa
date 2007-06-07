@@ -1,5 +1,5 @@
 %define name	sympa
-%define version 5.3
+%define version 5.3.1
 %define release %mkrel 1
 
 # ugly...
@@ -18,7 +18,7 @@ Source1:	%{name}.init
 Patch0:     %{name}-5.3b.1-install.patch
 URL:		http://www.sympa.org/
 Requires:	openssl >= 0.9.5a
-Requires:	MHonArc >= 2.4.5
+Requires:	mhonarc >= 2.4.5
 Requires:	apache-mod_fastcgi
 Requires:   mail-server
 Requires:	perl-CGI-Fast
