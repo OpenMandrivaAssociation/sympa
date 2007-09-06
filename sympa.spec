@@ -26,12 +26,12 @@ Requires:	perl-Crypt-CipherSaber
 Requires:	perl-Template
 Requires:	perl-MailTools
 Requires(pre):	    rpm-helper
-Requires(post):     rpm-helper >= 0.18.3
+Requires(post):     rpm-helper >= 0.20.0
 Requires(post):     mail-server
 Requires(preun):    rpm-helper
 Requires(preun):    mail-server
 Requires(postun):   rpm-helper >= 0.16
-BuildRequires:      rpm-helper >= 0.18.3
+BuildRequires:      rpm-helper >= 0.20.0
 BuildRequires:      rpm-mandriva-setup >= 1.23
 BuildRequires:	    openssl-devel >= 0.9.5a
 BuildRequires:	    perl-MailTools
@@ -206,15 +206,7 @@ if [ $1 = 1 ]; then
   # installation
 
   # Setup log facility for Sympa
-  facility=%_get_free_syslog_facility
-  if [ -n "$facility" ];then
-    # syslog configuration
-    cat >> %{_sysconfdir}/syslog.conf <<EOF
-# added by sympa-%{version} rpm $(date)
-$facility.*	-%{_var}/log/sympa/sympa.log
-EOF
-    /sbin/service syslog reload
-  fi
+  facility=`%_post_syslogadd %{_var}/log/sympa/sympa.log`
 
   # sympa configuration
   hostname=`hostname`
@@ -269,11 +261,7 @@ if [ $1 = 0 ]; then
   # uninstallation
 
   # clean syslog
-  sed -i \
-    -e '/^# added by sympa/d' \
-    -e '/^local[0-9]\.\*	-\/var\/log\/sympa\/sympa.log$/d' \
-    %{_sysconfdir}/syslog.conf
-  /sbin/service syslog reload
+  %_preun_syslogdel
 
   # remove aliases
   mta="`readlink /etc/alternatives/sendmail-command 2>/dev/null | cut -d . -f 2`"
