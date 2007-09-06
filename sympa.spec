@@ -1,5 +1,5 @@
 %define name	sympa
-%define version 5.3.1
+%define version 5.3.3
 %define release %mkrel 1
 
 # ugly...
