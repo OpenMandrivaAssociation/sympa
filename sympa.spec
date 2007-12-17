@@ -36,7 +36,6 @@ BuildRequires:      rpm-mandriva-setup >= 1.23
 BuildRequires:	    openssl-devel >= 0.9.5a
 BuildRequires:	    perl-MailTools
 BuildRequires:	    perl-libintl-perl
-BuildRoot:          %{_tmppath}/%{name}-%{version}
 
 %description
 SYMPA is an electronic mailing list manager. It is used to automate list
