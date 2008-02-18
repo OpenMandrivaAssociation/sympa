@@ -1,6 +1,6 @@
 %define name	sympa
 %define version 5.3.4
-%define release %mkrel 1
+%define release %mkrel 2
 
 # ugly...
 %define exceptions perl(\\(Net::LDAP\\|Archive\\|Commands\\|Conf\\|Language\\|Ldap\\|List\\|Log\\|Marc.*\\|Message\\|SympaTransport\\|Version\\|X509\\|cookielib\\|mail\\|smtp\\|wwslib\\|.*\.pl\\))
