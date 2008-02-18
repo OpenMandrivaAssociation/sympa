@@ -10,7 +10,7 @@
 Name:		%{name}
 Version:	%{version}
 Release:	%{release}
-Summary:	SYMPA is an electronic mailing list manager
+Summary:	Electronic mailing list manager
 License:	GPL
 Group:		System/Servers
 Source0:	%{name}-%{version}.tar.gz
