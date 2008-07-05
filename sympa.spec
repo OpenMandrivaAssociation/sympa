@@ -1,6 +1,6 @@
 %define name	sympa
-%define version 5.3.4
-%define release %mkrel 2
+%define version 5.4.3
+%define release %mkrel 1
 
 # ugly...
 %define exceptions perl(\\(Net::LDAP\\|Archive\\|Commands\\|Conf\\|Language\\|Ldap\\|List\\|Log\\|Marc.*\\|Message\\|SympaTransport\\|Version\\|X509\\|cookielib\\|mail\\|smtp\\|wwslib\\|.*\.pl\\))
@@ -15,13 +15,15 @@ License:	GPL
 Group:		System/Servers
 Source0:	%{name}-%{version}.tar.gz
 Source1:	%{name}.init
-Patch0:     %{name}-5.3b.1-install.patch
+Patch0:     %{name}-5.4.3-install.patch
+Patch1:     %{name}-5.4.3-dont-redefine-constants.patch
 URL:		http://www.sympa.org/
+Requires:	apache-mod_fastcgi
+Requires:	perl(CGI::Fast)
+Requires:	perl(HTML::StripScripts::Parser)
 Requires:	openssl >= 0.9.5a
 Requires:	mhonarc >= 2.4.5
-Requires:	apache-mod_fastcgi
 Requires:   mail-server
-Requires:	perl-CGI-Fast
 Requires:	perl-Crypt-CipherSaber
 Requires:	perl-Template
 Requires:	perl-MailTools
@@ -36,6 +38,7 @@ BuildRequires:      rpm-mandriva-setup >= 1.23
 BuildRequires:	    openssl-devel >= 0.9.5a
 BuildRequires:	    perl-MailTools
 BuildRequires:	    perl-libintl-perl
+BuildRequires:	    perl(HTML::StripScripts::Parser)
 BuildRoot:          %{_tmppath}/%{name}-%{version}
 
 %description
@@ -52,7 +55,9 @@ Documentation is available under HTML and SGML (source) formats.
 
 %prep
 %setup -q
-%patch -p 1
+%patch0 -p 1
+%patch1 -p 1
+autoreconf
 
 %build
 %serverbuild
@@ -61,8 +66,7 @@ Documentation is available under HTML and SGML (source) formats.
 	--with-mandir=%{_mandir} \
 	--with-confdir=%{_sysconfdir}/sympa \
 	--with-etcdir=%{_sysconfdir}/sympa \
-	--with-cgidir=%{_var}/www/fcgi-bin \
-	--with-iconsdir=%{_var}/www/sympa \
+	--with-cgidir=%{_var}/www/sympa \
 	--with-bindir=%{_bindir} \
 	--with-sbindir=%{_sbindir} \
 	--with-libexecdir=%{_bindir} \
@@ -75,9 +79,10 @@ Documentation is available under HTML and SGML (source) formats.
 	--with-spooldir=%{_var}/spool/sympa \
 	--with-initdir=%{_initrddir} \
     --with-docdir=%{_docdir}/%{name}-%{version} \
-    --with-sampledir=%{_docdir}/%{name}-%{version}/sample
+    --with-sampledir=%{_docdir}/%{name}-%{version}/sample \
+    --with-sendmail_aliases=%{_localstatedir}/lib/sympa/aliases
 
-%make sources
+%make sources wrapper soap_wrapper
 
 %install
 rm -rf %{buildroot}
@@ -113,12 +118,7 @@ EOF
 install -m 755 %{SOURCE1} %{buildroot}%{_initrddir}/%{name}
 
 # sympa configuration
-cat >> %{buildroot}%{_sysconfdir}/sympa/sympa.conf <<EOF
-sendmail_aliases    %{_localstatedir}/lib/sympa/aliases
-EOF
-
 perl -pi \
-    -e 's|^#openssl(\s+).*|openssl$1%{_bindir}/openssl|;' \
     -e 's|^static_content_path(\s+).*|static_content_path$1%{_localstatedir}/lib/sympa/www|;' \
     -e 's|^static_content_url(\s+).*|static_content_url$1/sympa-www|;' \
     %{buildroot}%{_sysconfdir}/sympa/sympa.conf
@@ -131,11 +131,13 @@ perl -pi \
 # apache conf
 install -d -m 755 %{buildroot}%{_webappconfdir}
 cat > %{buildroot}%{_webappconfdir}/sympa.conf <<EOF
-Alias /sympa-www/icons %{_var}/www/sympa
+Alias /sympa %{_var}/www/sympa
 Alias /sympa-www %{_localstatedir}/lib/sympa/www
-ScriptAlias /sympa %{_var}/www/fcgi-bin/wwsympa.fcgi
 
 <Directory "%{_var}/www/sympa">
+    Options ExecCGI
+    AddHandler fastcgi-script .fcgi
+    DirectoryIndex wwsympa-wrapper.fcgi
     Allow from all
 </Directory>
 
@@ -188,12 +190,17 @@ rm -f %{buildroot}%{_sysconfdir}/sympa/README
 rm -f %{buildroot}%{_datadir}/sympa/README
 
 # Install remaining documentation manually
-install -m 644 COPYING README NEWS KNOWNBUGS README.urpmi %{buildroot}%{_docdir}/%{name}-%{version}
+install -m 644 COPYING README NEWS README.urpmi %{buildroot}%{_docdir}/%{name}-%{version}
 
 # don't install sudo wrapper, wwwsympa is setuid
-rm -f %{buildroot}%{_var}/www/fcgi-bin/wwsympa_sudo_wrapper.pl
+rm -f %{buildroot}%{_var}/www/sympa/wwsympa_sudo_wrapper.pl
+
+# don't install  bundled certs
+rm -f %{buildroot}%{_datadir}/sympa/ca-bundle.crt
 
 %find_lang sympa
+%find_lang web_help
+cat web_help.lang >> sympa.lang
 
 %pre
 %_pre_useradd sympa %{_localstatedir}/lib/sympa /bin/false
@@ -286,13 +293,15 @@ fi
 
 %files -f sympa.lang
 %defattr(-,root,root)
+%{_docdir}/%{name}-%{version}
 
 # variable directories
 %attr(-,sympa,sympa) %{_localstatedir}/lib/sympa
-%attr(-,sympa,sympa) %{_var}/spool/sympa
-%attr(-,sympa,sympa) %{_var}/run/sympa
+%attr(-,sympa,sympa) %{_localstatedir}/spool/sympa
+%attr(-,sympa,sympa) %{_localstatedir}/run/sympa
+%{_localstatedir}/log/sympa
 
-# sympa config files
+# config files
 %dir %{_sysconfdir}/sympa
 %config(noreplace) %attr(640,root,sympa) %{_sysconfdir}/sympa/sympa.conf
 %config(noreplace) %{_sysconfdir}/sympa/wwsympa.conf
@@ -302,37 +311,30 @@ fi
 %{_sysconfdir}/sympa/web_tt2
 %{_sysconfdir}/sympa/mail_tt2
 %{_sysconfdir}/sympa/general_task_models
-
-# various other configuration files
 %{_sysconfdir}/smrsh/sympa
 %{_initrddir}/sympa
 %config(noreplace) %{_sysconfdir}/logrotate.d/sympa
 %config(noreplace) %{_webappconfdir}/sympa.conf
 
-# Binaries
-%attr(-,sympa,sympa) %{_var}/www/fcgi-bin/wwsympa.fcgi
-%attr(-,sympa,sympa) %{_var}/www/fcgi-bin/sympa_soap_server.fcgi
+# binaries
 %attr(-,sympa,sympa) %{_bindir}/queue
 %attr(-,sympa,sympa) %{_bindir}/bouncequeue
 %attr(-,sympa,sympa) %{_bindir}/familyqueue
-%attr(4750,root,sympa) %{_bindir}/aliaswrapper
-%attr(4750,root,sympa) %{_bindir}/virtualwrapper
+%attr(-,root,sympa) %{_bindir}/aliaswrapper
+%attr(-,root,sympa) %{_bindir}/virtualwrapper
 %{_sbindir}/*
 
-# Data
+# other
 %{_datadir}/sympa
-
-# Logs
-%{_var}/log/sympa
-
-# Icons and binaries for Apache
-%{_var}/www/sympa
-
-# Documentation
-%{_docdir}/%{name}-%{version}
 %{_mandir}/man8/*
+
+# web interface
+%dir %{_var}/www/sympa
+%{_var}/www/sympa/wwsympa.fcgi
+%{_var}/www/sympa/sympa_soap_server.fcgi
+%attr(-,sympa,sympa) %{_var}/www/sympa/sympa_soap_server-wrapper.fcgi
+%attr(-,sympa,sympa) %{_var}/www/sympa/wwsympa-wrapper.fcgi
+%{_var}/www/sympa/icons
 
 %clean
 rm -rf %{buildroot}
-
-
