@@ -62,7 +62,7 @@ autoreconf
 %build
 %serverbuild
 ./configure \
-	--prefix=%{_localstatedir}/lib/sympa \
+	--prefix=%{_var}/lib/sympa \
 	--with-mandir=%{_mandir} \
 	--with-confdir=%{_sysconfdir}/sympa \
 	--with-etcdir=%{_sysconfdir}/sympa \
@@ -72,7 +72,7 @@ autoreconf
 	--with-libexecdir=%{_bindir} \
 	--with-libdir=%{_datadir}/sympa/lib \
 	--with-datadir=%{_datadir}/sympa \
-	--with-expldir=%{_localstatedir}/lib/sympa/expl \
+	--with-expldir=%{_var}/lib/sympa/expl \
 	--with-piddir=%{_var}/run/sympa \
 	--with-localedir=%{_datadir}/locale \
 	--with-scriptdir=%{_datadir}/sympa/script \
@@ -80,7 +80,7 @@ autoreconf
 	--with-initdir=%{_initrddir} \
     --with-docdir=%{_docdir}/%{name}-%{version} \
     --with-sampledir=%{_docdir}/%{name}-%{version}/sample \
-    --with-sendmail_aliases=%{_localstatedir}/lib/sympa/aliases
+    --with-sendmail_aliases=%{_var}/lib/sympa/aliases
 
 %make sources wrapper soap_wrapper
 
@@ -95,7 +95,7 @@ done
 
 # Create bounce and archive storage directories
 for dir in bounce arc www; do
-  mkdir -p %{buildroot}%{_localstatedir}/lib/sympa/$dir
+  mkdir -p %{buildroot}%{_var}/lib/sympa/$dir
 done
 
 # Create PID directory
@@ -117,31 +117,21 @@ EOF
 # init script
 install -m 755 %{SOURCE1} %{buildroot}%{_initrddir}/%{name}
 
-# sympa configuration
-perl -pi \
-    -e 's|^static_content_path(\s+).*|static_content_path$1%{_localstatedir}/lib/sympa/www|;' \
-    -e 's|^static_content_url(\s+).*|static_content_url$1/sympa-www|;' \
-    %{buildroot}%{_sysconfdir}/sympa/sympa.conf
-
-perl -pi \
-    -e 's|^icons_url(\s+).*|icons_url$1/sympa-www/icons|;' \
-    %{buildroot}%{_sysconfdir}/sympa/wwsympa.conf
-
+# web stuff
+pushd  %{buildroot}%{_var}/www/sympa
+ln -s ../../lib/sympa/www/css .
+ln -s ../../lib/sympa/www/pictures .
+popd
 
 # apache conf
 install -d -m 755 %{buildroot}%{_webappconfdir}
 cat > %{buildroot}%{_webappconfdir}/sympa.conf <<EOF
 Alias /sympa %{_var}/www/sympa
-Alias /sympa-www %{_localstatedir}/lib/sympa/www
 
 <Directory "%{_var}/www/sympa">
-    Options ExecCGI
+    Options ExecCGI FollowSymlinks
     AddHandler fastcgi-script .fcgi
     DirectoryIndex wwsympa-wrapper.fcgi
-    Allow from all
-</Directory>
-
-<Directory "%{_localstatedir}/lib/sympa/www">
     Allow from all
 </Directory>
 EOF
@@ -165,7 +155,7 @@ The setup used here differs from default one, to achieve better FHS compliance.
 - the binaries are in %{_bindir} and %{_sbindir}
 - the configuration files are in %{_sysconfdir}/sympa
 - the constant files are in %{_libdir}/sympa and %{_datadir}/sympa
-- the variable files are in %{_localstatedir}/lib/sympa
+- the variable files are in %{_var}/lib/sympa
 - the logs files are in %{_var}/log/sympa
 
 Post-installation
@@ -183,7 +173,7 @@ EOF
 
 # sendmail secure shell
 install -d -m 755 %{buildroot}%{_sysconfdir}/smrsh
-ln -s %{_localstatedir}/lib/sympa/bin/queue %{buildroot}%{_sysconfdir}/smrsh/sympa
+ln -s %{_var}/lib/sympa/bin/queue %{buildroot}%{_sysconfdir}/smrsh/sympa
 
 # Delete documentation in wrong places
 rm -f %{buildroot}%{_sysconfdir}/sympa/README
@@ -203,7 +193,7 @@ rm -f %{buildroot}%{_datadir}/sympa/ca-bundle.crt
 cat web_help.lang >> sympa.lang
 
 %pre
-%_pre_useradd sympa %{_localstatedir}/lib/sympa /bin/false
+%_pre_useradd sympa %{_var}/lib/sympa /bin/false
 
 %post
 %_post_service sympa
@@ -226,14 +216,14 @@ if [ $1 = 1 ]; then
     %{_sysconfdir}/sympa/sympa.conf
 
   # Initial aliase file creation
-  cat >> %{_localstatedir}/lib/sympa/aliases <<EOF
+  cat >> %{_var}/lib/sympa/aliases <<EOF
 listmaster:	"|%{_bindir}/queue listmaster"
 sympa:		"|%{_bindir}/queue sympa"
 bounce+*:	"|%{_bindir}/bouncequeue sympa"
 sympa-request:	listmaster@$hostname
 sympa-owner:	listmaster@$hostname
 EOF
-  chown sympa.sympa %{_localstatedir}/lib/sympa/aliases
+  chown sympa.sympa %{_var}/lib/sympa/aliases
 
   # mta-specific aliases inclusion procedure
   mta="`readlink /etc/alternatives/sendmail-command 2>/dev/null | cut -d . -f 2`"
@@ -241,11 +231,11 @@ EOF
     database=`/usr/sbin/postconf -h alias_database`
     maps=`/usr/sbin/postconf -h alias_maps`
     postconf -e \
-        "alias_database = $database, hash:%{_localstatedir}/lib/sympa/aliases" \
-        "alias_maps = $maps, hash:%{_localstatedir}/lib/sympa/aliases"
+        "alias_database = $database, hash:%{_var}/lib/sympa/aliases" \
+        "alias_maps = $maps, hash:%{_var}/lib/sympa/aliases"
   else
     cat >> %{_sysconfdir}/aliases <<EOF
-:include:	%{_localstatedir}/lib/sympa/aliases
+:include:	%{_var}/lib/sympa/aliases
 EOF
   fi
   /usr/bin/newaliases
@@ -274,14 +264,14 @@ if [ $1 = 0 ]; then
   mta="`readlink /etc/alternatives/sendmail-command 2>/dev/null | cut -d . -f 2`"
   if [ "$mta" == "postfix" ]; then
     database=`/usr/sbin/postconf -h alias_database | \
-      sed -e 's|, hash:%{_localstatedir}/lib/sympa/aliases||'`
+      sed -e 's|, hash:%{_var}/lib/sympa/aliases||'`
     maps=`/usr/sbin/postconf -h alias_maps | \
-      sed -e 's|, hash:%{_localstatedir}/lib/sympa/aliases||'`
+      sed -e 's|, hash:%{_var}/lib/sympa/aliases||'`
     postconf -e \
       "alias_database = $database" \
       "alias_maps = $maps"
   else
-    sed -i -e '/:include:   %{_localstatedir}/lib/sympa/aliases/d' \
+    sed -i -e '/:include:   %{_var}/lib/sympa/aliases/d' \
       %{_sysconfdir}/aliases
   fi
   /usr/bin/newaliases
@@ -296,10 +286,10 @@ fi
 %{_docdir}/%{name}-%{version}
 
 # variable directories
-%attr(-,sympa,sympa) %{_localstatedir}/lib/sympa
-%attr(-,sympa,sympa) %{_localstatedir}/spool/sympa
-%attr(-,sympa,sympa) %{_localstatedir}/run/sympa
-%{_localstatedir}/log/sympa
+%attr(-,sympa,sympa) %{_var}/lib/sympa
+%attr(-,sympa,sympa) %{_var}/spool/sympa
+%attr(-,sympa,sympa) %{_var}/run/sympa
+%{_var}/log/sympa
 
 # config files
 %dir %{_sysconfdir}/sympa
@@ -335,6 +325,8 @@ fi
 %attr(-,sympa,sympa) %{_var}/www/sympa/sympa_soap_server-wrapper.fcgi
 %attr(-,sympa,sympa) %{_var}/www/sympa/wwsympa-wrapper.fcgi
 %{_var}/www/sympa/icons
+%{_var}/www/sympa/css
+%{_var}/www/sympa/pictures
 
 %clean
 rm -rf %{buildroot}
