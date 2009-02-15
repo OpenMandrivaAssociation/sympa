@@ -1,5 +1,5 @@
 %define name	sympa
-%define version 5.4.3
+%define version 5.4.6
 %define release %mkrel 1
 
 # ugly...
@@ -16,7 +16,6 @@ Group:		System/Servers
 Source0:	%{name}-%{version}.tar.gz
 Source1:	%{name}.init
 Patch0:     %{name}-5.4.3-install.patch
-Patch1:     %{name}-5.4.3-dont-redefine-constants.patch
 URL:		http://www.sympa.org/
 Requires:	apache-mod_fastcgi
 Requires:	perl(CGI::Fast)
@@ -56,7 +55,6 @@ Documentation is available under HTML and SGML (source) formats.
 %prep
 %setup -q
 %patch0 -p 1
-%patch1 -p 1
 autoreconf
 
 %build
