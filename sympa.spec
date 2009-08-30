@@ -32,6 +32,7 @@ BuildRequires:      rpm-mandriva-setup >= 1.23
 BuildRequires:	    openssl-devel >= 0.9.5a
 BuildRequires:	    perl-MailTools
 BuildRequires:	    perl-libintl-perl
+BuildRequires:	    gettext-devel
 BuildRequires:	    perl(HTML::StripScripts::Parser)
 BuildRoot:          %{_tmppath}/%{name}-%{version}
 
