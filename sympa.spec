@@ -1,11 +1,10 @@
 %define name	sympa
-%define version 5.4.6
-%define release %mkrel 1
+%define version 6.0
+%define beta    b2
+%define release %mkrel 0.%{beta}.1
 
-# ugly...
-%define exceptions perl(\\(Net::LDAP\\|Archive\\|Commands\\|Conf\\|Language\\|Ldap\\|List\\|Log\\|Marc.*\\|Message\\|SympaTransport\\|Version\\|X509\\|cookielib\\|mail\\|smtp\\|wwslib\\|.*\.pl\\))
-%define _provides_exceptions %{exceptions}
-%define _requires_exceptions %{exceptions}
+%define _provides_exceptions perl(.*)
+%define _requires_exceptions perl(\\(Sympa.*\\|Archive\\|Auth\\|Bounce\\|Bulk\\|Commands\\|Conf\\|Config_XML\\|Datasource\\|Family\\|Fetch\\|Language\\|Ldap\\|List\\|Lock\\|Log\\|Marc\\|Message\\|PlainDigest\\|Robot\\|SharedDocument\\|Scenario\\|SQLSource\\|Task\\|Upgrade\\))
 
 Name:		%{name}
 Version:	%{version}
@@ -13,19 +12,15 @@ Release:	%{release}
 Summary:	Electronic mailing list manager
 License:	GPL
 Group:		System/Servers
-Source0:	%{name}-%{version}.tar.gz
-Source1:	%{name}.init
-Patch0:     %{name}-5.4.3-install.patch
 URL:		http://www.sympa.org/
+Source0:	%{name}-%{version}b.2.tar.gz
+Source1:	%{name}.init
+Patch0:     sympa-6.0b.2-fix-variables-definitions.patch
+Patch1:     sympa-6.0b.2-ensure-confdir-exists.patch
 Requires:	apache-mod_fastcgi
-Requires:	perl(CGI::Fast)
-Requires:	perl(HTML::StripScripts::Parser)
 Requires:	openssl >= 0.9.5a
 Requires:	mhonarc >= 2.4.5
 Requires:   mail-server
-Requires:	perl-Crypt-CipherSaber
-Requires:	perl-Template
-Requires:	perl-MailTools
 Requires(pre):	    rpm-helper
 Requires(post):     rpm-helper >= 0.20.0
 Requires(post):     mail-server
@@ -53,59 +48,30 @@ available.
 Documentation is available under HTML and SGML (source) formats. 
 
 %prep
-%setup -q
+%setup -q -n %{name}-%{version}b.2
 %patch0 -p 1
+%patch1 -p 1
 autoreconf
 
 %build
 %serverbuild
-./configure \
-	--prefix=%{_var}/lib/sympa \
-	--with-mandir=%{_mandir} \
-	--with-confdir=%{_sysconfdir}/sympa \
-	--with-etcdir=%{_sysconfdir}/sympa \
-	--with-cgidir=%{_var}/www/sympa \
-	--with-bindir=%{_bindir} \
-	--with-sbindir=%{_sbindir} \
-	--with-libexecdir=%{_bindir} \
-	--with-libdir=%{_datadir}/sympa/lib \
-	--with-datadir=%{_datadir}/sympa \
-	--with-expldir=%{_var}/lib/sympa/expl \
-	--with-piddir=%{_var}/run/sympa \
-	--with-localedir=%{_datadir}/locale \
-	--with-scriptdir=%{_datadir}/sympa/script \
-	--with-spooldir=%{_var}/spool/sympa \
-	--with-initdir=%{_initrddir} \
-    --with-docdir=%{_docdir}/%{name}-%{version} \
-    --with-sampledir=%{_docdir}/%{name}-%{version}/sample \
-    --with-sendmail_aliases=%{_var}/lib/sympa/aliases
-
-%make sources wrapper soap_wrapper
+%configure2_5x \
+    --enable-fhs \
+    --libexecdir=%{_sbindir} \
+    --with-confdir=%{_sysconfdir}/sympa
+%make
 
 %install
 rm -rf %{buildroot}
 %makeinstall_std
 
-# Create bounce and archive incoming directories
-for dir in bounce arc; do
-  mkdir -p %{buildroot}%{_var}/spool/sympa/$dir
-done
-
-# Create bounce and archive storage directories
-for dir in bounce arc www; do
-  mkdir -p %{buildroot}%{_var}/lib/sympa/$dir
-done
-
-# Create PID directory
-mkdir -p %{buildroot}%{_var}/run/sympa
-
 # log directory
-mkdir -p %{buildroot}/%{_var}/log/sympa
+mkdir -p %{buildroot}%{_localstatedir}/log/sympa
 
 # logrotate
 install -d -m 755 %{buildroot}%{_sysconfdir}/logrotate.d
 cat > %{buildroot}%{_sysconfdir}/logrotate.d/sympa <<EOF
-%{_var}/log/sympa {
+%{_localstatedir}/log/sympa {
 	missingok
 	notifempty
 	copytruncate
@@ -115,19 +81,13 @@ EOF
 # init script
 install -m 755 %{SOURCE1} %{buildroot}%{_initrddir}/%{name}
 
-# web stuff
-pushd  %{buildroot}%{_var}/www/sympa
-ln -s ../../lib/sympa/www/css .
-ln -s ../../lib/sympa/www/pictures .
-popd
-
 # apache conf
 install -d -m 755 %{buildroot}%{_webappconfdir}
 cat > %{buildroot}%{_webappconfdir}/sympa.conf <<EOF
-Alias /sympa %{_var}/www/sympa
+Alias /sympa %{_libdir}/sympa/cgi
 
-<Directory "%{_var}/www/sympa">
-    Options ExecCGI FollowSymlinks
+<Directory %{_libdir}/sympa/cgi>
+    Options ExecCGI
     AddHandler fastcgi-script .fcgi
     DirectoryIndex wwsympa-wrapper.fcgi
     Allow from all
@@ -153,8 +113,8 @@ The setup used here differs from default one, to achieve better FHS compliance.
 - the binaries are in %{_bindir} and %{_sbindir}
 - the configuration files are in %{_sysconfdir}/sympa
 - the constant files are in %{_libdir}/sympa and %{_datadir}/sympa
-- the variable files are in %{_var}/lib/sympa
-- the logs files are in %{_var}/log/sympa
+- the variable files are in %{_localstatedir}/lib/sympa
+- the logs files are in %{_localstatedir}/log/sympa
 
 Post-installation
 -----------------
@@ -171,17 +131,11 @@ EOF
 
 # sendmail secure shell
 install -d -m 755 %{buildroot}%{_sysconfdir}/smrsh
-ln -s %{_var}/lib/sympa/bin/queue %{buildroot}%{_sysconfdir}/smrsh/sympa
-
-# Delete documentation in wrong places
-rm -f %{buildroot}%{_sysconfdir}/sympa/README
-rm -f %{buildroot}%{_datadir}/sympa/README
+ln -s %{_localstatedir}/lib/sympa/bin/queue \
+    %{buildroot}%{_sysconfdir}/smrsh/sympa
 
 # Install remaining documentation manually
-install -m 644 COPYING README NEWS README.urpmi %{buildroot}%{_docdir}/%{name}-%{version}
-
-# don't install sudo wrapper, wwwsympa is setuid
-rm -f %{buildroot}%{_var}/www/sympa/wwsympa_sudo_wrapper.pl
+install -m 644 COPYING README NEWS README.urpmi %{buildroot}%{_docdir}/%{name}
 
 # don't install  bundled certs
 rm -f %{buildroot}%{_datadir}/sympa/ca-bundle.crt
@@ -190,8 +144,11 @@ rm -f %{buildroot}%{_datadir}/sympa/ca-bundle.crt
 %find_lang web_help
 cat web_help.lang >> sympa.lang
 
+%clean
+rm -rf %{buildroot}
+
 %pre
-%_pre_useradd sympa %{_var}/lib/sympa /bin/false
+%_pre_useradd sympa %{_localstatedir}/lib/sympa /bin/false
 
 %post
 %_post_service sympa
@@ -201,7 +158,7 @@ if [ $1 = 1 ]; then
   # installation
 
   # Setup log facility for Sympa
-  facility=`%_post_syslogadd %{_var}/log/sympa/sympa.log`
+  facility=`%_post_syslogadd %{_localstatedir}/log/sympa/sympa.log`
 
   # sympa configuration
   hostname=`hostname`
@@ -214,14 +171,14 @@ if [ $1 = 1 ]; then
     %{_sysconfdir}/sympa/sympa.conf
 
   # Initial aliase file creation
-  cat >> %{_var}/lib/sympa/aliases <<EOF
+  cat >> %{_localstatedir}/lib/sympa/aliases <<EOF
 listmaster:	"|%{_bindir}/queue listmaster"
 sympa:		"|%{_bindir}/queue sympa"
 bounce+*:	"|%{_bindir}/bouncequeue sympa"
 sympa-request:	listmaster@$hostname
 sympa-owner:	listmaster@$hostname
 EOF
-  chown sympa.sympa %{_var}/lib/sympa/aliases
+  chown sympa.sympa %{_localstatedir}/lib/sympa/aliases
 
   # mta-specific aliases inclusion procedure
   mta="`readlink /etc/alternatives/sendmail-command 2>/dev/null | cut -d . -f 2`"
@@ -229,11 +186,11 @@ EOF
     database=`/usr/sbin/postconf -h alias_database`
     maps=`/usr/sbin/postconf -h alias_maps`
     postconf -e \
-        "alias_database = $database, hash:%{_var}/lib/sympa/aliases" \
-        "alias_maps = $maps, hash:%{_var}/lib/sympa/aliases"
+        "alias_database = $database, hash:%{_localstatedir}/lib/sympa/aliases" \
+        "alias_maps = $maps, hash:%{_localstatedir}/lib/sympa/aliases"
   else
     cat >> %{_sysconfdir}/aliases <<EOF
-:include:	%{_var}/lib/sympa/aliases
+:include:	%{_localstatedir}/lib/sympa/aliases
 EOF
   fi
   /usr/bin/newaliases
@@ -262,14 +219,14 @@ if [ $1 = 0 ]; then
   mta="`readlink /etc/alternatives/sendmail-command 2>/dev/null | cut -d . -f 2`"
   if [ "$mta" == "postfix" ]; then
     database=`/usr/sbin/postconf -h alias_database | \
-      sed -e 's|, hash:%{_var}/lib/sympa/aliases||'`
+      sed -e 's|, hash:%{_localstatedir}/lib/sympa/aliases||'`
     maps=`/usr/sbin/postconf -h alias_maps | \
-      sed -e 's|, hash:%{_var}/lib/sympa/aliases||'`
+      sed -e 's|, hash:%{_localstatedir}/lib/sympa/aliases||'`
     postconf -e \
       "alias_database = $database" \
       "alias_maps = $maps"
   else
-    sed -i -e '/:include:   %{_var}/lib/sympa/aliases/d' \
+    sed -i -e '/:include:   %{_localstatedir}/lib/sympa/aliases/d' \
       %{_sysconfdir}/aliases
   fi
   /usr/bin/newaliases
@@ -281,50 +238,46 @@ fi
 
 %files -f sympa.lang
 %defattr(-,root,root)
-%{_docdir}/%{name}-%{version}
+%{_docdir}/%{name}
 
 # variable directories
-%attr(-,sympa,sympa) %{_var}/lib/sympa
-%attr(-,sympa,sympa) %{_var}/spool/sympa
-%attr(-,sympa,sympa) %{_var}/run/sympa
-%{_var}/log/sympa
+%attr(-,sympa,sympa) %{_localstatedir}/lib/sympa
+%attr(-,sympa,sympa) %{_localstatedir}/spool/sympa
+%attr(-,sympa,sympa) %{_localstatedir}/run/sympa
+%{_localstatedir}/log/sympa
 
 # config files
 %dir %{_sysconfdir}/sympa
 %config(noreplace) %attr(640,root,sympa) %{_sysconfdir}/sympa/sympa.conf
 %config(noreplace) %{_sysconfdir}/sympa/wwsympa.conf
-%{_sysconfdir}/sympa/create_list_templates
-%{_sysconfdir}/sympa/scenari
-%{_sysconfdir}/sympa/task_models
-%{_sysconfdir}/sympa/web_tt2
-%{_sysconfdir}/sympa/mail_tt2
-%{_sysconfdir}/sympa/general_task_models
+%config(noreplace) %{_sysconfdir}/sympa/data_structure.version
 %{_sysconfdir}/smrsh/sympa
 %{_initrddir}/sympa
 %config(noreplace) %{_sysconfdir}/logrotate.d/sympa
 %config(noreplace) %{_webappconfdir}/sympa.conf
 
 # binaries
-%attr(-,sympa,sympa) %{_bindir}/queue
-%attr(-,sympa,sympa) %{_bindir}/bouncequeue
-%attr(-,sympa,sympa) %{_bindir}/familyqueue
-%attr(-,root,sympa) %{_bindir}/aliaswrapper
-%attr(-,root,sympa) %{_bindir}/virtualwrapper
-%{_sbindir}/*
+%attr(-,sympa,sympa) %{_sbindir}/queue
+%attr(-,sympa,sympa) %{_sbindir}/bouncequeue
+%attr(-,sympa,sympa) %{_sbindir}/familyqueue
+%attr(-,root,sympa) %{_sbindir}/aliaswrapper
+%attr(-,root,sympa) %{_sbindir}/virtualwrapper
+%{_sbindir}/sympa.pl
+%{_sbindir}/alias_manager.pl
+%{_sbindir}/archived.pl
+%{_sbindir}/bounced.pl
+%{_sbindir}/bulk.pl
+%{_sbindir}/sympa_wizard.pl
+%{_sbindir}/task_manager.pl
 
 # other
 %{_datadir}/sympa
 %{_mandir}/man8/*
 
 # web interface
-%dir %{_var}/www/sympa
-%{_var}/www/sympa/wwsympa.fcgi
-%{_var}/www/sympa/sympa_soap_server.fcgi
-%attr(-,sympa,sympa) %{_var}/www/sympa/sympa_soap_server-wrapper.fcgi
-%attr(-,sympa,sympa) %{_var}/www/sympa/wwsympa-wrapper.fcgi
-%{_var}/www/sympa/icons
-%{_var}/www/sympa/css
-%{_var}/www/sympa/pictures
-
-%clean
-rm -rf %{buildroot}
+%dir %{_libdir}/sympa
+%dir %{_libdir}/sympa/cgi
+%{_libdir}/sympa/cgi/wwsympa.fcgi
+%{_libdir}/sympa/cgi/sympa_soap_server.fcgi
+%attr(-,sympa,sympa) %{_libdir}/sympa/cgi/sympa_soap_server-wrapper.fcgi
+%attr(-,sympa,sympa) %{_libdir}/sympa/cgi/wwsympa-wrapper.fcgi
