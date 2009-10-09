@@ -1,7 +1,7 @@
 %define name	sympa
 %define version 6.0
 %define beta    b2
-%define release %mkrel 0.%{beta}.2
+%define release %mkrel 0.%{beta}.3
 
 %define _provides_exceptions perl(.*)
 %define _requires_exceptions perl(\\(Sympa.*\\|Archive\\|Auth\\|Bounce\\|Bulk\\|Commands\\|Conf\\|Config_XML\\|Datasource\\|Family\\|Fetch\\|Language\\|Ldap\\|List\\|Lock\\|Log\\|Marc.*\\|Message\\|PlainDigest\\|Robot\\|SharedDocument\\|Scenario\\|SQLSource\\|Task\\|Upgrade\\))
@@ -64,7 +64,8 @@ autoreconf
 
 %install
 rm -rf %{buildroot}
-%makeinstall_std
+
+%makeinstall_std HOST=localhost
 
 # log directory
 mkdir -p %{buildroot}%{_localstatedir}/log/sympa
