@@ -1,7 +1,6 @@
 %define name	sympa
 %define version 6.0
-%define beta    b2
-%define release %mkrel 0.%{beta}.3
+%define release %mkrel 1
 
 %define _provides_exceptions perl(.*)
 %define _requires_exceptions perl(\\(Sympa.*\\|Archive\\|Auth\\|Bounce\\|Bulk\\|Commands\\|Conf\\|Config_XML\\|Datasource\\|Family\\|Fetch\\|Language\\|Ldap\\|List\\|Lock\\|Log\\|Marc.*\\|Message\\|PlainDigest\\|Robot\\|SharedDocument\\|Scenario\\|SQLSource\\|Task\\|Upgrade\\))
@@ -13,10 +12,9 @@ Summary:	Electronic mailing list manager
 License:	GPL
 Group:		System/Servers
 URL:		http://www.sympa.org/
-Source0:	%{name}-%{version}b.2.tar.gz
+Source0:	http://www.sympa.org/distribution/%{name}-%{version}.tar.gz
 Source1:	%{name}.init
-Patch0:     sympa-6.0b.2-fix-variables-definitions.patch
-Patch1:     sympa-6.0b.2-ensure-confdir-exists.patch
+Patch0:     sympa-6.0-fix-fhs-installation.patch
 Requires:	apache-mod_fastcgi
 Requires:	openssl >= 0.9.5a
 Requires:	mhonarc >= 2.4.5
@@ -49,9 +47,8 @@ available.
 Documentation is available under HTML and SGML (source) formats. 
 
 %prep
-%setup -q -n %{name}-%{version}b.2
+%setup -q
 %patch0 -p 1
-%patch1 -p 1
 autoreconf
 
 %build
