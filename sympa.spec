@@ -89,7 +89,11 @@ Alias /sympa %{_libdir}/sympa/cgi
     Options ExecCGI
     AddHandler fastcgi-script .fcgi
     DirectoryIndex wwsympa-wrapper.fcgi
-    Allow from all
+
+    Order allow,deny
+    Allow from 127.0.0.1
+    Deny from all
+    ErrorDocument 403 "Access denied per %{_webappconfdir}/sympa.conf"
 </Directory>
 EOF
 
