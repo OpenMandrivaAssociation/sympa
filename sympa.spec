@@ -1,6 +1,6 @@
 %define name	sympa
-%define version 6.0
-%define release %mkrel 2
+%define version 6.0.1
+%define release %mkrel 1
 
 %define _provides_exceptions perl(.*)
 %define _requires_exceptions perl(\\(Sympa.*\\|Archive\\|Auth\\|Bounce\\|Bulk\\|Commands\\|Conf\\|Config_XML\\|Datasource\\|Family\\|Fetch\\|Language\\|Ldap\\|List\\|Lock\\|Log\\|Marc.*\\|Message\\|PlainDigest\\|Robot\\|SharedDocument\\|Scenario\\|SQLSource\\|Task\\|Upgrade\\|WebAgent\\))
@@ -90,9 +90,9 @@ Alias /sympa %{_libdir}/sympa/cgi
     AddHandler fastcgi-script .fcgi
     DirectoryIndex wwsympa-wrapper.fcgi
 
-    Order allow,deny
-    Allow from 127.0.0.1
+    Order deny,allow
     Deny from all
+    Allow from all
     ErrorDocument 403 "Access denied per %{_webappconfdir}/sympa.conf"
 </Directory>
 EOF
