@@ -1,6 +1,6 @@
 %define name	sympa
 %define version 6.0.1
-%define release %mkrel 2
+%define release %mkrel 3
 
 %define _provides_exceptions perl(.*)
 %define _requires_exceptions perl(\\(Sympa.*\\|Archive\\|Auth\\|Bounce\\|Bulk\\|Commands\\|Conf\\|Config_XML\\|Datasource\\|Family\\|Fetch\\|Language\\|Ldap\\|List\\|Lock\\|Log\\|Marc.*\\|Message\\|PlainDigest\\|Robot\\|SharedDocument\\|Scenario\\|SQLSource\\|Task\\|Upgrade\\|WebAgent\\))
@@ -153,7 +153,9 @@ rm -rf %{buildroot}
 
 %post
 %_post_service sympa
+%if %mdkversion < 201010
 %_post_webapp
+%endif
 
 if [ $1 = 1 ]; then
   # installation
@@ -235,7 +237,9 @@ fi
 
 %postun
 %_postun_userdel sympa
+%if %mdkversion < 201010
 %_postun_webapp
+%endif
 
 %files -f sympa.lang
 %defattr(-,root,root)
