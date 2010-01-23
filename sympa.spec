@@ -64,19 +64,6 @@ rm -rf %{buildroot}
 
 %makeinstall_std HOST=localhost
 
-# log directory
-mkdir -p %{buildroot}%{_localstatedir}/log/sympa
-
-# logrotate
-install -d -m 755 %{buildroot}%{_sysconfdir}/logrotate.d
-cat > %{buildroot}%{_sysconfdir}/logrotate.d/sympa <<EOF
-%{_localstatedir}/log/sympa {
-	missingok
-	notifempty
-	copytruncate
-}
-EOF
-
 # init script
 install -m 755 %{SOURCE1} %{buildroot}%{_initrddir}/%{name}
 
@@ -243,7 +230,6 @@ fi
 %attr(-,sympa,sympa) %{_localstatedir}/lib/sympa
 %attr(-,sympa,sympa) %{_localstatedir}/spool/sympa
 %attr(-,sympa,sympa) %{_localstatedir}/run/sympa
-%{_localstatedir}/log/sympa
 
 # config files
 %dir %{_sysconfdir}/sympa
@@ -252,7 +238,6 @@ fi
 %config(noreplace) %{_sysconfdir}/sympa/data_structure.version
 %{_sysconfdir}/smrsh/sympa
 %{_initrddir}/sympa
-%config(noreplace) %{_sysconfdir}/logrotate.d/sympa
 %config(noreplace) %{_webappconfdir}/sympa.conf
 
 # binaries
