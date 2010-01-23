@@ -1,6 +1,6 @@
 %define name	sympa
 %define version 6.0.1
-%define release %mkrel 3
+%define release %mkrel 4
 
 %define _provides_exceptions perl(.*)
 %define _requires_exceptions perl(\\(Sympa.*\\|Archive\\|Auth\\|Bounce\\|Bulk\\|Commands\\|Conf\\|Config_XML\\|Datasource\\|Family\\|Fetch\\|Language\\|Ldap\\|List\\|Lock\\|Log\\|Marc.*\\|Message\\|PlainDigest\\|Robot\\|SharedDocument\\|Scenario\\|SQLSource\\|Task\\|Upgrade\\|WebAgent\\))
@@ -160,9 +160,6 @@ rm -rf %{buildroot}
 if [ $1 = 1 ]; then
   # installation
 
-  # Setup log facility for Sympa
-  facility=`%_post_syslogadd %{_localstatedir}/log/sympa/sympa.log`
-
   # sympa configuration
   hostname=`hostname`
 
@@ -170,7 +167,7 @@ if [ $1 = 1 ]; then
     -e "s|^domain(\s+).*|domain\$1$hostname|;" \
     -e "s|^listmaster(\s+).*|listmaster\$1listmaster\@$hostname|;" \
     -e "s|^wwsympa_url(\s+).*|wwsympa_url\$1http://$hostname/sympa|;" \
-    -e "s|^syslog(\s+).*|syslog\$1$facility|;" \
+    -e "s|^syslog(\s+).*|syslog\$1mail|;" \
     %{_sysconfdir}/sympa/sympa.conf
 
   # Initial aliase file creation
@@ -214,9 +211,6 @@ fi
 
 if [ $1 = 0 ]; then
   # uninstallation
-
-  # clean syslog
-  %_preun_syslogdel
 
   # remove aliases
   mta="`readlink /etc/alternatives/sendmail-command 2>/dev/null | cut -d . -f 2`"
