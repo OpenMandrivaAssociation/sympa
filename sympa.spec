@@ -1,6 +1,6 @@
 %define name	sympa
 %define version 6.0.1
-%define release %mkrel 4
+%define release %mkrel 5
 
 %define _provides_exceptions perl(.*)
 %define _requires_exceptions perl(\\(Sympa.*\\|Archive\\|Auth\\|Bounce\\|Bulk\\|Commands\\|Conf\\|Config_XML\\|Datasource\\|Family\\|Fetch\\|Language\\|Ldap\\|List\\|Lock\\|Log\\|Marc.*\\|Message\\|PlainDigest\\|Robot\\|SharedDocument\\|Scenario\\|SQLSource\\|Task\\|Upgrade\\|WebAgent\\))
@@ -159,9 +159,9 @@ if [ $1 = 1 ]; then
 
   # Initial aliase file creation
   cat >> %{_localstatedir}/lib/sympa/aliases <<EOF
-listmaster:	"|%{_bindir}/queue listmaster"
-sympa:		"|%{_bindir}/queue sympa"
-bounce+*:	"|%{_bindir}/bouncequeue sympa"
+listmaster:	"|%{_sbindir}/queue listmaster"
+sympa:		"|%{_sbindir}/queue sympa"
+bounce+*:	"|%{_sbindir}/bouncequeue sympa"
 sympa-request:	listmaster@$hostname
 sympa-owner:	listmaster@$hostname
 EOF
@@ -188,7 +188,10 @@ else
     aliases=%{_sysconfdir}/aliases
   fi
   # correct pathes
-  sed -i -e 's|%{_libdir}/sympa/bin|%{_bindir}|' $aliases
+  sed -i \
+      -e 's|%{_bindir}/queue|%{_sbindir}/queue|' \
+      -e 's|%{_bindir}/bouncequeue|%{_sbindir}/bouncequeue|' \
+      $aliases
   # regenerate aliases
   /usr/bin/newaliases
 fi
