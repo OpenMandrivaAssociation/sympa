@@ -181,7 +181,8 @@ EOF
 :include:	%{_localstatedir}/lib/sympa/aliases
 EOF
   fi
-  /usr/bin/newaliases
+  # masqmail don't have this command
+  [ -x /usr/bin/newaliases ] && /usr/bin/newaliases
 else
   # find aliases file
   aliases=`awk '/sendmail_aliases/ {print $2}' %{_sysconfdir}/sympa/sympa.conf`
