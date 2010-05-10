@@ -117,11 +117,6 @@ Additional useful packages
 - perl-ldap for LDAP support
 EOF
 
-# sendmail secure shell
-install -d -m 755 %{buildroot}%{_sysconfdir}/smrsh
-ln -s %{_localstatedir}/lib/sympa/bin/queue \
-    %{buildroot}%{_sysconfdir}/smrsh/sympa
-
 # Install remaining documentation manually
 install -m 644 COPYING README NEWS README.urpmi %{buildroot}%{_docdir}/%{name}
 
@@ -242,7 +237,6 @@ fi
 %config(noreplace) %attr(640,root,sympa) %{_sysconfdir}/sympa/sympa.conf
 %config(noreplace) %{_sysconfdir}/sympa/wwsympa.conf
 %config(noreplace) %{_sysconfdir}/sympa/data_structure.version
-%{_sysconfdir}/smrsh/sympa
 %{_initrddir}/sympa
 %config(noreplace) %{_webappconfdir}/sympa.conf
 
