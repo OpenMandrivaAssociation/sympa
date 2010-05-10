@@ -1,6 +1,6 @@
 %define name	sympa
 %define version 6.0.1
-%define release %mkrel 6
+%define release %mkrel 7
 
 %define _provides_exceptions perl(.*)
 %define _requires_exceptions perl(\\(Sympa.*\\|Archive\\|Auth\\|Bounce\\|Bulk\\|Commands\\|Conf\\|Config_XML\\|Datasource\\|Family\\|Fetch\\|Language\\|Ldap\\|List\\|Lock\\|Log\\|Marc.*\\|Message\\|PlainDigest\\|Robot\\|SharedDocument\\|Scenario\\|SQLSource\\|Task\\|Upgrade\\|WebAgent\\))
@@ -15,7 +15,6 @@ URL:		http://www.sympa.org/
 Source0:	http://www.sympa.org/distribution/%{name}-%{version}.tar.gz
 Source1:	%{name}.init
 Patch0:     sympa-6.0.1-fix-fhs-installation.patch
-Requires:	apache-mod_fastcgi
 Requires:	openssl >= 0.9.5a
 Requires:	mhonarc >= 2.4.5
 Requires:   mail-server
@@ -45,6 +44,18 @@ message to 90% of subscribers, of course considering that the network is
 available.
 
 Documentation is available under HTML and SGML (source) formats. 
+
+%package www
+Summary:	Web interface for %{name}
+Group:		System/Servers
+Requires:	%{name} = %{version}-%{release}
+Requires:	webserver
+Suggests:   apache-mod_fastcgi
+Requires(post):     rpm-helper >= 0.20.0
+Requires(postun):   rpm-helper >= 0.16
+
+%description www
+This package contains the web interface for %{name}.
 
 %prep
 %setup -q
@@ -136,6 +147,8 @@ rm -rf %{buildroot}
 
 %post
 %_post_service sympa
+
+%post www
 %if %mdkversion < 201010
 %_post_webapp
 %endif
@@ -219,6 +232,8 @@ fi
 %postun
 %_postun_groupel sympa 
 %_postun_userdel sympa
+
+%postun www
 %if %mdkversion < 201010
 %_postun_webapp
 %endif
@@ -235,10 +250,8 @@ fi
 # config files
 %dir %{_sysconfdir}/sympa
 %config(noreplace) %attr(640,root,sympa) %{_sysconfdir}/sympa/sympa.conf
-%config(noreplace) %{_sysconfdir}/sympa/wwsympa.conf
 %config(noreplace) %{_sysconfdir}/sympa/data_structure.version
 %{_initrddir}/sympa
-%config(noreplace) %{_webappconfdir}/sympa.conf
 
 # binaries
 %attr(-,sympa,sympa) %{_sbindir}/queue
@@ -258,10 +271,13 @@ fi
 %{_datadir}/sympa
 %{_mandir}/man8/*
 
-# web interface
+%files www
+%defattr(-,root,root)
 %dir %{_libdir}/sympa
 %dir %{_libdir}/sympa/cgi
 %{_libdir}/sympa/cgi/wwsympa.fcgi
 %{_libdir}/sympa/cgi/sympa_soap_server.fcgi
 %attr(-,sympa,sympa) %{_libdir}/sympa/cgi/sympa_soap_server-wrapper.fcgi
 %attr(-,sympa,sympa) %{_libdir}/sympa/cgi/wwsympa-wrapper.fcgi
+%config(noreplace) %{_sysconfdir}/sympa/wwsympa.conf
+%config(noreplace) %{_webappconfdir}/sympa.conf
