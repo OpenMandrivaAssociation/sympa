@@ -143,7 +143,6 @@ rm -rf %{buildroot}
 
 %pre
 %_pre_useradd sympa %{_localstatedir}/lib/sympa /bin/false
-%_pre_groupadd sympa sympa
 
 %post
 %_post_service sympa
@@ -230,7 +229,6 @@ if [ $1 = 0 ]; then
 fi
 
 %postun
-%_postun_groupel sympa 
 %_postun_userdel sympa
 
 %postun www
