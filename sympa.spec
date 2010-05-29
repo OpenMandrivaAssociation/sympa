@@ -1,6 +1,6 @@
 %define name	sympa
-%define version 6.0.1
-%define release %mkrel 7
+%define version 6.0.2
+%define release %mkrel 1
 
 %define _provides_exceptions perl(.*)
 %define _requires_exceptions perl(\\(Sympa.*\\|Archive\\|Auth\\|Bounce\\|Bulk\\|Commands\\|Conf\\|Config_XML\\|Datasource\\|Family\\|Fetch\\|Language\\|Ldap\\|List\\|Lock\\|Log\\|Marc.*\\|Message\\|PlainDigest\\|Robot\\|SharedDocument\\|Scenario\\|SQLSource\\|Task\\|Upgrade\\|WebAgent\\))
@@ -15,6 +15,8 @@ URL:		http://www.sympa.org/
 Source0:	http://www.sympa.org/distribution/%{name}-%{version}.tar.gz
 Source1:	%{name}.init
 Patch0:     sympa-6.0.1-fix-fhs-installation.patch
+Patch1:     sympa-6.0.2-fix-bulk.patch
+Patch2:     sympa-6.0.2-fix-created-directory-ownership.patch
 Requires:	openssl >= 0.9.5a
 Requires:	mhonarc >= 2.4.5
 Requires:   mail-server
@@ -60,14 +62,18 @@ This package contains the web interface for %{name}.
 %prep
 %setup -q
 %patch0 -p 0
-autoreconf
+%patch1 -p 1
+%patch2 -p 1
+autoreconf -i
 
 %build
 %serverbuild
 %configure2_5x \
     --enable-fhs \
     --libexecdir=%{_sbindir} \
-    --with-confdir=%{_sysconfdir}/sympa
+    --sysconfdir=%{_sysconfdir}/sympa \
+    --with-confdir=%{_sysconfdir}/sympa \
+    --with-sendmail_aliases=%{_localstatedir}/lib/sympa/aliases
 %make
 
 %install
@@ -75,7 +81,9 @@ rm -rf %{buildroot}
 
 %makeinstall_std HOST=localhost
 
-# init script
+# install our own init script
+rm -rf %{buildroot}%{_sysconfdir}/sympa/rc.d
+install -d -m 755 %{buildroot}%{_initrddir}
 install -m 755 %{SOURCE1} %{buildroot}%{_initrddir}/%{name}
 
 # apache conf
@@ -147,11 +155,6 @@ rm -rf %{buildroot}
 %post
 %_post_service sympa
 
-%post www
-%if %mdkversion < 201010
-%_post_webapp
-%endif
-
 if [ $1 = 1 ]; then
   # installation
 
@@ -205,6 +208,11 @@ else
   /usr/bin/newaliases
 fi
 
+%post www
+%if %mdkversion < 201010
+%_post_webapp
+%endif
+
 %preun
 %_preun_service sympa
 
@@ -248,6 +256,7 @@ fi
 # config files
 %dir %{_sysconfdir}/sympa
 %config(noreplace) %attr(640,root,sympa) %{_sysconfdir}/sympa/sympa.conf
+%config(noreplace) %{_sysconfdir}/sympa/wwsympa.conf
 %config(noreplace) %{_sysconfdir}/sympa/data_structure.version
 %{_initrddir}/sympa
 
@@ -277,5 +286,4 @@ fi
 %{_libdir}/sympa/cgi/sympa_soap_server.fcgi
 %attr(-,sympa,sympa) %{_libdir}/sympa/cgi/sympa_soap_server-wrapper.fcgi
 %attr(-,sympa,sympa) %{_libdir}/sympa/cgi/wwsympa-wrapper.fcgi
-%config(noreplace) %{_sysconfdir}/sympa/wwsympa.conf
 %config(noreplace) %{_webappconfdir}/sympa.conf
