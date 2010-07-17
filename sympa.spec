@@ -1,6 +1,7 @@
 %define name	sympa
-%define version 6.0.2
-%define release %mkrel 1
+%define version 6.1
+%define beta 4
+%define release %mkrel 0.beta%{beta}.1
 
 %define _provides_exceptions perl(.*)
 %define _requires_exceptions perl(\\(Sympa.*\\|Archive\\|Auth\\|Bounce\\|Bulk\\|Commands\\|Conf\\|Config_XML\\|Datasource\\|Family\\|Fetch\\|Language\\|Ldap\\|List\\|Lock\\|Log\\|Marc.*\\|Message\\|PlainDigest\\|Robot\\|SharedDocument\\|Scenario\\|SQLSource\\|Task\\|Upgrade\\|WebAgent\\))
@@ -12,11 +13,9 @@ Summary:	Electronic mailing list manager
 License:	GPL
 Group:		System/Servers
 URL:		http://www.sympa.org/
-Source0:	http://www.sympa.org/distribution/%{name}-%{version}.tar.gz
+Source0:	http://www.sympa.org/distribution/%{name}-%{version}b.%{beta}.tar.gz
 Source1:	%{name}.init
 Patch0:     sympa-6.0.1-fix-fhs-installation.patch
-Patch1:     sympa-6.0.2-fix-bulk.patch
-Patch2:     sympa-6.0.2-fix-created-directory-ownership.patch
 Requires:	openssl >= 0.9.5a
 Requires:	mhonarc >= 2.4.5
 Requires:   mail-server
@@ -60,10 +59,8 @@ Requires(postun):   rpm-helper >= 0.16
 This package contains the web interface for %{name}.
 
 %prep
-%setup -q
+%setup -q -n sympa-%{version}b.%{beta}
 %patch0 -p 0
-%patch1 -p 1
-%patch2 -p 1
 autoreconf -i
 
 %build
