@@ -1,6 +1,6 @@
 %define name	sympa
 %define version 6.1
-%define beta 4
+%define beta 7
 %define release %mkrel 0.beta%{beta}.1
 
 %define _provides_exceptions perl(.*)
@@ -60,8 +60,8 @@ This package contains the web interface for %{name}.
 
 %prep
 %setup -q -n sympa-%{version}b.%{beta}
-%patch0 -p 0
-autoreconf -i
+#patch0 -p 0
+#autoreconf -i
 
 %build
 %serverbuild
