@@ -1,7 +1,7 @@
 %define name	sympa
 %define version 6.1
 %define beta 7
-%define release %mkrel 0.beta%{beta}.1
+%define release %mkrel 0.beta%{beta}.2
 
 %define _provides_exceptions perl(.*)
 %define _requires_exceptions perl(\\(Sympa.*\\|Archive\\|Auth\\|Bounce\\|Bulk\\|Commands\\|Conf\\|Config_XML\\|Datasource\\|Family\\|Fetch\\|Language\\|Ldap\\|List\\|Lock\\|Log\\|Marc.*\\|Message\\|PlainDigest\\|Robot\\|SharedDocument\\|Scenario\\|SQLSource\\|Task\\|Upgrade\\|WebAgent\\))
@@ -15,7 +15,7 @@ Group:		System/Servers
 URL:		http://www.sympa.org/
 Source0:	http://www.sympa.org/distribution/%{name}-%{version}b.%{beta}.tar.gz
 Source1:	%{name}.init
-Patch0:     sympa-6.0.1-fix-fhs-installation.patch
+Patch0:     sympa-6.1b.7-fix-configuration-parameter.patch
 Requires:	openssl >= 0.9.5a
 Requires:	mhonarc >= 2.4.5
 Requires:   mail-server
@@ -60,8 +60,7 @@ This package contains the web interface for %{name}.
 
 %prep
 %setup -q -n sympa-%{version}b.%{beta}
-#patch0 -p 0
-#autoreconf -i
+%patch0 -p 1
 
 %build
 %serverbuild
@@ -86,7 +85,13 @@ install -m 755 %{SOURCE1} %{buildroot}%{_initrddir}/%{name}
 # apache conf
 install -d -m 755 %{buildroot}%{_webappconfdir}
 cat > %{buildroot}%{_webappconfdir}/sympa.conf <<EOF
+Alias /static-sympa %{_localstatedir}/sympa/static_content
 Alias /sympa %{_libdir}/sympa/cgi
+
+<Directory %{_localstatedir}/sympa/static_content>
+    Order allow,deny
+    Allow from all
+</Directory>
 
 <Directory %{_libdir}/sympa/cgi>
     Options ExecCGI
