@@ -1,5 +1,5 @@
 %define name	sympa
-%define version 6.1.3
+%define version 6.1.4
 %define release %mkrel 1
 
 %define _provides_exceptions perl(.*)
