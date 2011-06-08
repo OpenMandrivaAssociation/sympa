@@ -1,13 +1,9 @@
-%define name	sympa
-%define version 6.1.4
-%define release %mkrel 1
-
 %define _provides_exceptions perl(.*)
 %define _requires_exceptions perl(\\(Sympa.*\\|Archive\\|Auth\\|Bounce\\|Bulk\\|Commands\\|Conf\\|Config_XML\\|Datasource\\|Family\\|Fetch\\|Language\\|Ldap\\|List\\|Lock\\|Log\\|Marc.*\\|Message\\|PlainDigest\\|Robot\\|SharedDocument\\|Scenario\\|SQLSource\\|Task\\|Upgrade\\|WebAgent\\))
 
-Name:		%{name}
-Version:	%{version}
-Release:	%{release}
+Name:		sympa
+Version:	6.1.5
+Release:	%mkrel 1
 Summary:	Electronic mailing list manager
 License:	GPL
 Group:		System/Servers
