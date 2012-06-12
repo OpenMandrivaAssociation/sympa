@@ -2,7 +2,7 @@
 %define _requires_exceptions perl(\\(Sympa.*\\|Archive\\|Auth\\|Bounce\\|Bulk\\|Commands\\|Conf\\|Config_XML\\|Datasource\\|Family\\|Fetch\\|Language\\|Ldap\\|List\\|Lock\\|Log\\|Marc.*\\|Message\\|PlainDigest\\|Robot\\|SharedDocument\\|Scenario\\|SQLSource\\|Task\\|Upgrade\\|WebAgent\\))
 
 Name:		sympa
-Version:	6.1.5
+Version:	6.1.11
 Release:	%mkrel 1
 Summary:	Electronic mailing list manager
 License:	GPL
