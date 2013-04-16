@@ -3,7 +3,7 @@
 
 Name:		sympa
 Version:	6.1.5
-Release:	%mkrel 1
+Release:	2
 Summary:	Electronic mailing list manager
 License:	GPL
 Group:		System/Servers
@@ -203,10 +203,6 @@ else
   /usr/bin/newaliases
 fi
 
-%post www
-%if %mdkversion < 201010
-%_post_webapp
-%endif
 
 %preun
 %_preun_service sympa
@@ -234,10 +230,6 @@ fi
 %postun
 %_postun_userdel sympa
 
-%postun www
-%if %mdkversion < 201010
-%_postun_webapp
-%endif
 
 %files -f sympa.lang
 %defattr(-,root,root)
