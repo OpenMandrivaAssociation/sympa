@@ -1,9 +1,9 @@
-%define _provides_exceptions perl(.*)
-%define _requires_exceptions perl(\\(Sympa.*\\|Archive\\|Auth\\|Bounce\\|Bulk\\|Commands\\|Conf\\|Config_XML\\|Datasource\\|Family\\|Fetch\\|Language\\|Ldap\\|List\\|Lock\\|Log\\|Marc.*\\|Message\\|PlainDigest\\|Robot\\|SharedDocument\\|Scenario\\|SQLSource\\|Task\\|Upgrade\\|WebAgent\\))
+%define __noautoprov 'perl\(.*\)'
+%define __noautoreq 'perl\\(Sympa.*\\)|perl\\(Archive\\)|perl\\(Auth\\)|perl\\(Bounce\\)|perl\\(Bulk\\)|perl\\(Commands\\)|perl\\(Conf\\)|perl\\(Config_XML\\)|perl\\(Datasource\\)|perl\\(Family\\)|perl\\(Fetch\\)|perl\\(Language\\)|perl\\(Ldap\\)|perl\\(List\\)|perl\\(Lock\\)|perl\\(Log\\)|perl\\(Marc.*\\)|perl\\(Message\\)|perl\\(PlainDigest\\)|perl\\(Robot\\)|perl\\(SharedDocument\\)|perl\\(Scenario\\)|perl\\(SQLSource\\)|perl\\(Task\\)|perl\\(Upgrade\\)|perl\\(WebAgent\\)'
 
 Name:		sympa
 Version:	6.1.5
-Release:	3
+Release:	4
 Summary:	Electronic mailing list manager
 License:	GPL
 Group:		System/Servers
@@ -26,7 +26,6 @@ BuildRequires:	    perl-MailTools
 BuildRequires:	    perl-libintl-perl
 BuildRequires:	    gettext-devel
 BuildRequires:	    perl(HTML::StripScripts::Parser)
-BuildRoot:          %{_tmppath}/%{name}-%{version}
 
 %description
 SYMPA is an electronic mailing list manager. It is used to automate list
