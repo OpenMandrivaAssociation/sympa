@@ -3,7 +3,7 @@
 
 Name:		sympa
 Version:	6.1.5
-Release:	4
+Release:	5
 Summary:	Electronic mailing list manager
 License:	GPL
 Group:		System/Servers
@@ -81,8 +81,7 @@ Alias /static-sympa %{_localstatedir}/sympa/static_content
 Alias /sympa %{_libdir}/sympa/cgi
 
 <Directory %{_localstatedir}/sympa/static_content>
-    Order allow,deny
-    Allow from all
+    Require all granted
 </Directory>
 
 <Directory %{_libdir}/sympa/cgi>
@@ -90,8 +89,7 @@ Alias /sympa %{_libdir}/sympa/cgi
     AddHandler fastcgi-script .fcgi
     DirectoryIndex wwsympa-wrapper.fcgi
 
-    Order allow,deny
-    Allow from all
+    Require all granted
 </Directory>
 EOF
 
