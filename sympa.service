@@ -1,0 +1,15 @@
+[Unit]
+Description=Main Sympa daemon
+After=syslog.target
+Wants=sympa-bulk.service
+Wants=sympa-archived.service
+Wants=sympa-bounced.service
+Wants=sympa-task_manager.service
+ 
+[Service]
+Type=forking
+PIDFile=/run/sympa/sympa.pid
+ExecStart=/usr/sbin/sympa.pl
+ 
+[Install]
+WantedBy=multi-user.target

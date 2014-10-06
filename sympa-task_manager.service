@@ -1,0 +1,9 @@
+[Unit]
+Description=Scheduled tasks processing for Sympa
+After=syslog.target
+BindTo=sympa.service
+ 
+[Service]
+Type=forking
+PIDFile=/run/sympa/task_manager.pid
+ExecStart=/usr/sbin/task_manager.pl
