@@ -1,12 +1,6 @@
-# disable linting for srpm. Sflo
-%define _build_pkgcheck_srpm %{nil}
-# the following definitions are badnes 50 each. Sflo
-%define _provides_exceptions perl(.*)
-%define _requires_exceptions perl(\\(Sympa.*\\|Archive\\|Auth\\|Bounce\\|Bulk\\|Commands\\|Conf\\|Config_XML\\|Datasource\\|Family\\|Fetch\\|Language\\|Ldap\\|List\\|Lock\\|Log\\|Marc.*\\|Message\\|PlainDigest\\|Robot\\|SharedDocument\\|Scenario\\|SQLSource\\|Task\\|Upgrade\\|WebAgent\\|SympaTransport\\`))
-
 Name:		sympa
 Version:	6.1.22
-Release:	2
+Release:	3
 Summary:	Electronic mailing list manager
 License:	GPL
 Group:		System/Servers
@@ -34,6 +28,7 @@ BuildRequires:	    perl-libintl-perl
 BuildRequires:	    gettext-devel
 BuildRequires:	    perl(HTML::StripScripts::Parser)
 
+Requires:	    perl-libintl-perl
 Provides:	    perl(SympaTransport)
 
 %description
