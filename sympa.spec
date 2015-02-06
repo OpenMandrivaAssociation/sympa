@@ -1,6 +1,6 @@
 Name:		sympa
 Version:	6.1.22
-Release:	3
+Release:	4
 Summary:	Electronic mailing list manager
 License:	GPL
 Group:		System/Servers
