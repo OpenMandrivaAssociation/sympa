@@ -1,2 +1,4 @@
-sources:
+removed_sources:
   sympa-6.1.22.tar.gz: b3187a99874a721531f0b14b8411bd85cdeda251
+sources:
+  sympa-6.1.24.tar.gz: 852327e0d7374e387f087afd336b2751b1dc3d43

@@ -1,6 +1,6 @@
 Name:		sympa
-Version:	6.1.22
-Release:	4
+Version:	6.1.24
+Release:	1
 Summary:	Electronic mailing list manager
 License:	GPL
 Group:		System/Servers
@@ -11,9 +11,10 @@ Source2:	sympa-bulk.service
 Source3:	sympa-archived.service
 Source4:	sympa-bounced.service
 Source5:	sympa-task_manager.service
+Source6:	sympa.tmpfiles
 Requires:	openssl >= 0.9.5a
 Requires:	mhonarc >= 2.4.5
-Requires:   mail-server
+Requires:	mail-server
 Requires(pre):	    rpm-helper
 Requires(post):     rpm-helper >= 0.20.0
 Requires(post):     mail-server
@@ -65,13 +66,16 @@ This package contains the web interface for %{name}.
     --libexecdir=%{_sbindir} \
     --sysconfdir=%{_sysconfdir}/sympa \
     --with-confdir=%{_sysconfdir}/sympa \
-    --with-aliases_file=%{_localstatedir}/lib/sympa/aliases
+    --with-aliases_file=%{_localstatedir}/lib/sympa/aliases \
+    --with-newaliases_arg=-oA/var/lib/sympa/aliases
 %make
 
 %install
-rm -rf %{buildroot}
-
 %makeinstall_std HOST=localhost
+
+perl -pi -e 's|/var/run|/run|' \
+    %{buildroot}%{_sysconfdir}/sympa/sympa.conf \
+    %{buildroot}%{_sysconfdir}/sympa/wwsympa.conf
 
 rm -f %{buildroot}%{_sysconfdir}/sympa/rc.d/init.d/sympa
 install -D -m 644 %{SOURCE1} %{buildroot}%{_unitdir}/sympa.service
@@ -79,11 +83,12 @@ install -D -m 644 %{SOURCE2} %{buildroot}%{_unitdir}/sympa-bulk.service
 install -D -m 644 %{SOURCE3} %{buildroot}%{_unitdir}/sympa-archived.service
 install -D -m 644 %{SOURCE4} %{buildroot}%{_unitdir}/sympa-bounced.service
 install -D -m 644 %{SOURCE5} %{buildroot}%{_unitdir}/sympa-task_manager.service
+install -D -m 644 %{SOURCE6} %{buildroot}%{_prefix}/lib/tmpfiles.d/sympa.conf
 
 # apache conf
 install -d -m 755 %{buildroot}%{_webappconfdir}
 cat > %{buildroot}%{_webappconfdir}/sympa.conf <<EOF
-Alias /static-sympa %{_localstatedir}/sympa/static_content
+Alias /static-sympa %{_localstatedir}/lib/sympa/static_content
 Alias /sympa %{_libdir}/sympa/cgi
 
 <Directory %{_localstatedir}/sympa/static_content>
@@ -211,11 +216,6 @@ else
   /usr/bin/newaliases
 fi
 
-%post www
-%if %mdkversion < 201010
-%_post_webapp
-%endif
-
 %preun
 %_preun_service sympa
 
@@ -242,19 +242,12 @@ fi
 %postun
 %_postun_userdel sympa
 
-%postun www
-%if %mdkversion < 201010
-%_postun_webapp
-%endif
-
 %files -f sympa.lang
-%defattr(-,root,root)
 %{_docdir}/%{name}
 
 # variable directories
 %attr(-,sympa,sympa) %{_localstatedir}/lib/sympa
 %attr(-,sympa,sympa) %{_localstatedir}/spool/sympa
-%attr(-,sympa,sympa) %{_localstatedir}/run/sympa
 
 # config files
 %dir %{_sysconfdir}/sympa
@@ -267,6 +260,7 @@ fi
 %{_unitdir}/sympa-archived.service
 %{_unitdir}/sympa-bounced.service
 %{_unitdir}/sympa-task_manager.service
+%{_prefix}/lib/tmpfiles.d/sympa.conf
 
 # binaries
 %attr(-,sympa,sympa) %{_sbindir}/queue
@@ -288,7 +282,6 @@ fi
 %{_mandir}/man8/*
 
 %files www
-%defattr(-,root,root)
 %dir %{_libdir}/sympa
 %dir %{_libdir}/sympa/cgi
 %{_libdir}/sympa/cgi/wwsympa.fcgi
