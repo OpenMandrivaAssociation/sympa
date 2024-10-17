@@ -4,7 +4,7 @@ Release:	1
 Summary:	Electronic mailing list manager
 License:	GPL
 Group:		System/Servers
-URL:		http://www.sympa.org/
+URL:		https://www.sympa.org/
 Source0:	http://www.sympa.org/distribution/%{name}-%{version}.tar.gz
 Source1:	sympa.service
 Source2:	sympa-bulk.service
