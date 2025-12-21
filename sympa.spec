@@ -21,6 +21,11 @@ Requires(post):     mail-server
 Requires(preun):    rpm-helper
 Requires(preun):    mail-server
 Requires(postun):   rpm-helper >= 0.16
+BuildRequires:	autoconf
+BuildRequires:	automake
+BuildRequires:	libtool-base
+BuildRequires:	slibtool
+BuildRequires:	make
 BuildRequires:      rpm-helper >= 0.20.0
 BuildRequires:      rpm-mandriva-setup >= 1.23
 BuildRequires:	    openssl-devel >= 0.9.5a
